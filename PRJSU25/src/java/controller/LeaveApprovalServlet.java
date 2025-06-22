@@ -12,15 +12,12 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.Users;
 
 /**
  *
  * @author HA DUC
  */
-public class LoginServlet extends HttpServlet {
-
-    DAO d = new DAO();
+public class LeaveApprovalServlet extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -34,7 +31,18 @@ public class LoginServlet extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-
+        try (PrintWriter out = response.getWriter()) {
+            /* TODO output your page here. You may use following sample code. */
+            out.println("<!DOCTYPE html>");
+            out.println("<html>");
+            out.println("<head>");
+            out.println("<title>Servlet LeaveApprovalServlet</title>");
+            out.println("</head>");
+            out.println("<body>");
+            out.println("<h1>Servlet LeaveApprovalServlet at " + request.getContextPath() + "</h1>");
+            out.println("</body>");
+            out.println("</html>");
+        }
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
@@ -49,7 +57,7 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.sendRedirect("Login.jsp");
+        processRequest(request, response);
     }
 
     /**
@@ -60,56 +68,38 @@ public class LoginServlet extends HttpServlet {
      * @throws ServletException if a servlet-specific error occurs
      * @throws IOException if an I/O error occurs
      */
+    ;
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // Step 1: Parse the request ID and action
+        int requestId = Integer.parseInt(request.getParameter("requestId"));
+        String action = request.getParameter("action");
 
-        String username = request.getParameter("username");
-        String password = request.getParameter("password");
-
-        DAO dao = new DAO();
-        Users user = dao.login(username, password);
-
-        if (user == null) {
-            request.setAttribute("mess", "Invalid username or password.");
-            request.getRequestDispatcher("Login.jsp").forward(request, response);
+        // Step 2: Get session and check user_id
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("user_id") == null) {
+            // If session is invalid or expired, redirect to login
+            response.sendRedirect("Login.jsp");
             return;
         }
 
-        String role = user.getRole();
-        if (role == null) {
-            request.setAttribute("mess", "Your account does not have a role assigned.");
-            request.getRequestDispatcher("Login.jsp").forward(request, response);
-            return;
+        int adminId = ((Integer) session.getAttribute("user_id")).intValue();
+
+        // Step 3: Approve or reject leave
+        DAO d = new DAO();
+        if ("approve".equalsIgnoreCase(action)) {
+            boolean update = d.approveLeaveRequest(requestId, adminId);
+            // (Optional) You can set a success message to display later
+        } else if ("reject".equalsIgnoreCase(action)) {
+            d.rejectLeaveRequest(requestId, adminId);
         }
 
-        // Save to session
-        HttpSession session = request.getSession();
-        session.setAttribute("user", user);
-        session.setAttribute("user_id", user.getUsers_id());
-
-        // Normalize and redirect
-        role = role.trim().toLowerCase();
-        session.setAttribute("role", role);  // ✅ Store role for later authorization checks
-
-        switch (role) {
-            case "admin":
-                session.setAttribute("user", user);
-                response.sendRedirect(request.getContextPath() + "/Admin.jsp");
-                break;
-            case "manager":
-                session.setAttribute("user", user);
-                response.sendRedirect(request.getContextPath() + "/Manager.jsp");
-                break;
-            case "employee":
-                session.setAttribute("user", user);
-                response.sendRedirect(request.getContextPath() + "/Employees.jsp");
-                break;
-            default:
-                session.invalidate();
-                request.setAttribute("mess", "Unknown role: " + role);
-                request.getRequestDispatcher("Login.jsp").forward(request, response);
-        }
+        // Step 4: Redirect back to admin dashboard
+        response.sendRedirect("Admin.jsp");
+        System.out.println("DEBUG: action = " + action);
+        System.out.println("DEBUG: requestId = " + requestId);
+        System.out.println("DEBUG: adminId = " + adminId);
 
     }
 

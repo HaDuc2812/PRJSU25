@@ -132,6 +132,7 @@ public class DAO extends DBContext {
         }
     }
 //get list of requestr from user with user id = ?
+
     public List<LeaveRequest> getLeaveRequestByUserId(int user_id) {
         List<LeaveRequest> list = new ArrayList<>();
         String sql = "select * from leave_requests  where user_id = ?";
@@ -157,5 +158,114 @@ public class DAO extends DBContext {
             e.printStackTrace();
         }
         return list;
+    }
+    //get all leave request
+
+    public List<LeaveRequest> getAllLeaveRequest() {
+        List<LeaveRequest> list = new ArrayList<>();
+        String sql = "select * from leave_requests";
+        try {
+            conn = DBContext.getConnection();
+            ps = conn.prepareStatement(sql);
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                LeaveRequest lr = new LeaveRequest();
+                lr.setId(rs.getInt("id"));
+                lr.setUserId(rs.getInt("user_id"));
+                lr.setLeaveTypeId(rs.getInt("leave_type_id"));
+                lr.setStartDate(rs.getDate("start_date"));
+                lr.setEndDate(rs.getDate("end_date"));
+                lr.setReason(rs.getString("reason"));
+                lr.setStatus(rs.getString("status"));
+                lr.setApprovedBy(rs.getInt("approved_by"));
+                list.add(lr);
+
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public boolean approveLeaveRequest(int requestId, int adminId) {
+        String updateSql = "UPDATE leave_requests SET status = 'approved', approved_by = ? WHERE id = ?";;
+        String updateBalaceSql = "UPDATE leave_balances SET used_days = used_days + DATEDIFF(day, ?, ?) WHERE user_id = ? AND leave_type_id = ?";
+        PreparedStatement ps1 = null, ps2 = null, ps3 = null;
+        try {
+            conn = DBContext.getConnection();
+            conn.setAutoCommit(false);
+            //get request details
+            ps1 = conn.prepareStatement("SELECT user_id, leave_type_id, start_date, end_date FROM leave_requests WHERE id = ?");
+            ps1.setInt(1, requestId);
+            rs = ps1.executeQuery();
+
+            if (rs.next()) {
+                int userId = rs.getInt("user_id");
+                int leaveTypeId = rs.getInt("leave_type_id");
+                Date start = rs.getDate("start_date");
+                Date end = rs.getDate("end_date");
+
+                //update leave_request table in the db
+                ps2 = conn.prepareStatement(updateSql);
+                ps2.setInt(1, adminId);
+                ps2.setInt(2, requestId);
+                ps2.executeUpdate();
+                // update leave balance
+                ps3 = conn.prepareStatement(updateBalaceSql);
+                ps3.setDate(1, start);
+                ps3.setDate(2, end);
+                ps3.setInt(3, userId);
+                ps3.setInt(4, leaveTypeId);
+                //commit the transactions
+                conn.commit();
+                return true;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            try {
+                if (conn != null) {
+                    conn.rollback();
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (ps1 != null) {
+                    ps1.close();
+                }
+                if (ps2 != null) {
+                    ps2.close();
+                }
+                if (ps3 != null) {
+                    ps3.close();
+                }
+                if (conn != null) {
+                    conn.setAutoCommit(true); // reset auto-commit
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+            }catch(SQLException e){
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
+
+    public void rejectLeaveRequest(int requestId, int adminId) {
+        String sql = "UPDATE leave_requests SET status='rejected', approved_by=? WHERE id=?";
+        try {
+            conn = DBContext.getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, adminId);
+            ps.setInt(2, requestId);
+            ps.executeUpdate(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }

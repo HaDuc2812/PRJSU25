@@ -7,11 +7,14 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>JSP Page</title>
-    </head>
-    <body>
-        <h1>Hello World!</h1>
-    </body>
+    <%
+    String role = (String) session.getAttribute("role");
+    if (role == null || !"manager".equals(role)) {
+        response.sendRedirect("Homepage.jsp");  // or Login.jsp
+        return;
+    }
+    %>
+    <!-- Admin page content -->
+    <h2>Welcome, Admin!</h2>
+
 </html>

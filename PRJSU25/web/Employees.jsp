@@ -80,6 +80,15 @@
         </script>
     </head>
     <body>
+        <%
+            String role = (String) session.getAttribute("role");
+            if (role == null || !"employee".equals(role)) {
+                response.sendRedirect("Homepage.jsp");  // or Login.jsp
+                return;
+            }
+        %>
+        <!-- Admin page content -->
+        <h2>Welcome, Admin!</h2>
 
         <div class="sidebar">
             <button onclick="showSection('formSection')">Tạo đơn nghỉ phép</button>
