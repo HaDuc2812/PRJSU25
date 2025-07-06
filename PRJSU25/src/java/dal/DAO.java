@@ -11,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import model.Account;
 import model.Department;
 import model.LeaveRequest;
 import model.Users;
@@ -28,39 +29,33 @@ public class DAO extends DBContext {
     PreparedStatement ps = null;
     ResultSet rs = null;
 
-    public Users login(String name, String password) {
-        Users user = null;
-
+    public Account login(String username, String password) {
+        String sql = "SELECT * FROM account WHERE [name] = ? AND [password] = ?";
         try {
-            Connection conn = DBContext.getConnection();
-            String sql = "SELECT id, name, email, password, role, department_id FROM users WHERE name = ? AND password = ?";
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setString(1, name);
-            ps.setString(2, password);
+            conn = DBContext.getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, username);
+            ps.setString(2, password); // ✅ this was missing!
 
-            ResultSet rs = ps.executeQuery();
+            rs = ps.executeQuery();
             if (rs.next()) {
-                user = new Users();
-                user.setUsers_id(rs.getInt("id"));
-                user.setU_name(rs.getString("name"));
-                user.setEmail(rs.getString("email"));
-                user.setPassword(rs.getString("password"));
-                user.setRole(rs.getString("role"));
-                user.setD_id(rs.getInt("department_id"));
-
-                System.out.println("DEBUG: role = " + user.getRole()); // check this prints correctly
+                Account acc = new Account();
+                acc.setUsers_id(rs.getInt("id")); // or setId()
+                acc.setU_name(rs.getString("name"));
+                acc.setEmail(rs.getString("email"));
+                acc.setPassword(rs.getString("password")); // or setPassword_hash
+                acc.setRole(rs.getString("role"));
+                acc.setDepartmentId(rs.getInt("department_id")); // ✅ properly set
+                return acc;
             }
-
-            conn.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
         }
-
-        return user;
+        return null; // if login failed
     }
 
     public Users checkAccountExist(String email) {
-        String sql = "select * from Users\n" + " where email=? ";
+        String sql = "select * from account\n" + " where email=? ";
         try {
             conn = DBContext.getConnection();
             ps = conn.prepareStatement(sql);
@@ -97,15 +92,13 @@ public class DAO extends DBContext {
 
     public String getDepartmentNameById(int id) {
         String name = null;
-
-        try {
-            conn = DBContext.getConnection();
-            String sql = "select name from departments where id =?";
-            ps = conn.prepareStatement(sql);
+        String sql = "SELECT name FROM departments WHERE id = ?";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
-            rs = ps.executeQuery();
-            if (rs.next()) {
-                name = rs.getString("name");
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    name = rs.getString("name");
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -187,6 +180,58 @@ public class DAO extends DBContext {
         return list;
     }
 
+    //get request by d_id
+    public List<LeaveRequest> getLeaveRequestByDepartmentId(int departmentId) {
+        List<LeaveRequest> list = new ArrayList<>();
+        String sql = "SELECT lr.*\n"
+                + "FROM leave_requests lr\n"
+                + "JOIN users u ON lr.user_id = u.id\n"
+                + "WHERE u.department_id = ?;";
+        try {
+            conn = DBContext.getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, departmentId);
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                LeaveRequest lr = new LeaveRequest();
+                lr.setId(rs.getInt("id"));
+                lr.setUserId(rs.getInt("user_id"));
+                lr.setLeaveTypeId(rs.getInt("leave_type_id"));
+                lr.setStartDate(rs.getDate("start_date"));
+                lr.setEndDate(rs.getDate("end_date"));
+                lr.setReason(rs.getString("reason"));
+                lr.setStatus(rs.getString("status"));
+                lr.setApprovedBy(rs.getInt("approved_by"));
+                list.add(lr);
+
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<LeaveRequest> getPendingLeaveRequestsByDepartmentId(int departmentId) {
+        List<LeaveRequest> list = new ArrayList<>();
+        String sql = "SELECT * FROM leave_requests lr "
+                + "JOIN users u ON lr.user_id = u.id "
+                + "WHERE u.department_id = ? AND lr.status = 'pending'";
+        try {
+            conn = DBContext.getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, departmentId);
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                LeaveRequest lr = new LeaveRequest();
+                // set properties from rs...
+                list.add(lr);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     public boolean approveLeaveRequest(int requestId, int adminId) {
         String updateSql = "UPDATE leave_requests SET status = 'approved', approved_by = ? WHERE id = ?";;
         String updateBalaceSql = "UPDATE leave_balances SET used_days = used_days + DATEDIFF(day, ?, ?) WHERE user_id = ? AND leave_type_id = ?";
@@ -249,7 +294,7 @@ public class DAO extends DBContext {
                 if (conn != null) {
                     conn.close();
                 }
-            }catch(SQLException e){
+            } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
@@ -267,5 +312,157 @@ public class DAO extends DBContext {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public List<Account> getAllAccount() {
+        List<Account> list = new ArrayList<>();
+        String sql = "SELECT * FROM account";
+
+        try {
+            conn = DBContext.getConnection();
+            ps = conn.prepareStatement(sql);
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Account acc = new Account();
+                acc.setUsers_id(rs.getInt("id"));
+                acc.setU_name(rs.getString("name"));
+                acc.setEmail(rs.getString("email"));
+                acc.setPassword(rs.getString("password"));
+                acc.setRole(rs.getString("role"));
+                acc.setStatus(rs.getString("status"));
+                acc.setDepartmentId(rs.getInt("department_id"));
+                String deptName = null;
+                try {
+                    deptName = getDepartmentNameById(acc.getDepartmentId());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                acc.setDepartmentName(deptName != null ? deptName : "Unknown");
+                list.add(acc);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public void addAccount(Account acc) {
+        String sql = "INSERT INTO account (name, email, password, role, department_id) VALUES (?, ?, ?, ?, ?) ";
+        try {
+            conn = DBContext.getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, acc.getU_name());
+            ps.setString(2, acc.getEmail());
+            ps.setString(3, acc.getPassword());
+            ps.setString(4, acc.getRole());
+            ps.setInt(5, acc.getDepartmentId());
+            ps.setString(6, acc.getStatus());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateAccount(Account acc) {
+        List<String> fields = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+        if (acc.getU_name() != null) {
+            fields.add("name = ?");
+            params.add(acc.getU_name());
+        }
+        if (acc.getEmail() != null) {
+            fields.add("email = ?");
+            params.add(acc.getEmail());
+        }
+        if (acc.getPassword() != null) {
+            fields.add("password = ?");
+            params.add(acc.getPassword());
+        }
+        if (acc.getRole() != null) {
+            fields.add("role = ?");
+            params.add(acc.getRole());
+        }
+        if (acc.getDepartmentId() != 0) {
+            fields.add("department_id = ?");
+            params.add(acc.getDepartmentId());
+        }
+        if (acc.getStatus() != null) {
+            fields.add("status = ?");
+            params.add(acc.getStatus());
+        }
+
+        if (fields.isEmpty()) {
+            return;
+        }
+        String sql = "UPDATE users SET " + String.join(", ", fields) + " WHERE id = ?";
+        params.add(acc.getUsers_id());
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void deleteAccount(int id) {
+        String sql = "Delete from users where id=? ";
+        try {
+            conn = DBContext.getConnection();
+            ps = conn.prepareStatement(sql);
+
+            ps.setInt(1, id);
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Account getAccountById(int id) {
+        String sql = "select * from users where id = ?";
+        try {
+            conn = DBContext.getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, id);
+            try {
+                rs = ps.executeQuery();
+                if (rs.next()) {
+                    return extractAccount(rs);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return null;
+    }
+
+    private void setAccountParams(PreparedStatement ps, Account acc) throws SQLException {
+        ps.setString(1, acc.getU_name());
+        ps.setString(2, acc.getEmail());
+        ps.setString(3, acc.getPassword());
+        ps.setString(4, acc.getRole());
+        ps.setInt(5, acc.getDepartmentId());
+        ps.setString(6, acc.getStatus());
+    }
+
+    private Account extractAccount(ResultSet rs) throws SQLException {
+        Account acc = new Account();
+        acc.setUsers_id(rs.getInt("id"));
+        acc.setU_name(rs.getString("name"));
+        acc.setEmail(rs.getString("email"));
+        acc.setPassword(rs.getString("password"));
+        acc.setRole(rs.getString("role"));
+        acc.setDepartmentId(rs.getInt("department_id"));
+        acc.setStatus(rs.getString("status"));
+        return acc;
     }
 }

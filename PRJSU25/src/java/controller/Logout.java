@@ -4,7 +4,6 @@
  */
 package controller;
 
-import dal.DAO;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
@@ -12,16 +11,12 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.Account;
-import model.Users;
 
 /**
  *
  * @author HA DUC
  */
-public class LoginServlet extends HttpServlet {
-
-    DAO d = new DAO();
+public class Logout extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -35,7 +30,18 @@ public class LoginServlet extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-
+        try (PrintWriter out = response.getWriter()) {
+            /* TODO output your page here. You may use following sample code. */
+            out.println("<!DOCTYPE html>");
+            out.println("<html>");
+            out.println("<head>");
+            out.println("<title>Servlet Logout</title>");
+            out.println("</head>");
+            out.println("<body>");
+            out.println("<h1>Servlet Logout at " + request.getContextPath() + "</h1>");
+            out.println("</body>");
+            out.println("</html>");
+        }
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
@@ -50,6 +56,13 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // Invalidate the session
+        HttpSession session = request.getSession(false); // false = don't create if not exists
+        if (session != null) {
+            session.invalidate();
+        }
+
+        // Redirect to login page
         response.sendRedirect("Login.jsp");
     }
 
@@ -64,53 +77,17 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
-        String username = request.getParameter("username");
-        String password = request.getParameter("password");
-        System.out.println("LOGIN INPUT username: " + username);
-        System.out.println("LOGIN INPUT password: " + password);
-        DAO dao = new DAO();
-        Account acc = dao.login(username, password); // using your login() method from AccountDAO
-
-        if (acc == null) {
-            request.setAttribute("mess", "Invalid username or password.");
-            request.getRequestDispatcher("Login.jsp").forward(request, response);
-            return;
-        }
-
-        String role = acc.getRole();
-        if (role == null || role.isBlank()) {
-            request.setAttribute("mess", "Your account does not have a role assigned.");
-            request.getRequestDispatcher("Login.jsp").forward(request, response);
-            return;
-        }
-
-        // Save to session
-        HttpSession session = request.getSession();
-        session.setAttribute("account", acc); // renamed from "user" to "account" for clarity
-        session.setAttribute("username", acc.getU_name());
-        session.setAttribute("role", role.trim().toLowerCase());
-
-        // Redirect by role
-        switch (role.trim().toLowerCase()) {
-            case "admin":
-                response.sendRedirect("Admin.jsp");
-                break;
-            case "manager":
-                response.sendRedirect("Manager.jsp");
-                break;
-            case "employee":
-                response.sendRedirect("Employees.jsp");
-                break;
-            default:
-                session.invalidate();
-                request.setAttribute("mess", "Unknown role: " + role);
-                request.getRequestDispatcher("Login.jsp").forward(request, response);
-        }
+        processRequest(request, response);
     }
 
+    /**
+     * Returns a short description of the servlet.
+     *
+     * @return a String containing servlet description
+     */
     @Override
     public String getServletInfo() {
-        return "Login controller that handles role-based redirection";
-    }
+        return "Short description";
+    }// </editor-fold>
+
 }

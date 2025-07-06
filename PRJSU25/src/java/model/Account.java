@@ -8,41 +8,25 @@ package model;
  *
  * @author HA DUC
  */
-public class Users {
-//    id INT IDENTITY(1,1) PRIMARY KEY,
-//    name VARCHAR(100) NOT NULL,
-//    email VARCHAR(100) UNIQUE NOT NULL,
-//    password VARCHAR(255) NOT NULL,
-//    role VARCHAR(20) CHECK (role IN ('employee', 'manager', 'admin')) NOT NULL DEFAULT 'employee',
-//    department_id INT,
-//    FOREIGN KEY (department_id) REFERENCES departments(id)
-//);
+public class Account extends Users {
 
-    private int users_id;
     private String u_name;
     private String email;
     private String password;
     private String role;
-    private int departmentId;
+    private String status;
+    private String departmentName;
 
-    public Users() {
+    public Account() {
+        super();
     }
 
-    public Users(int users_id, String u_name, String email, String password, String role, int d_id) {
-        this.users_id = users_id;
+    public Account(String u_name, String email, String password, String role, String status) {
         this.u_name = u_name;
         this.email = email;
         this.password = password;
         this.role = role;
-        this.departmentId = d_id;
-    }
-
-    public int getUsers_id() {
-        return users_id;
-    }
-
-    public void setUsers_id(int users_id) {
-        this.users_id = users_id;
+        this.status = status;
     }
 
     public String getU_name() {
@@ -77,12 +61,25 @@ public class Users {
         this.role = role;
     }
 
-    public int getDepartmentId() {
-        return departmentId;
+    public String getStatus() {
+        return status;
     }
 
-    public void setDepartmentId(int departmentId) {
-        this.departmentId = departmentId;
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getDepartmentName() {
+        return departmentName;
+    }
+
+    public void setDepartmentName(String departmentName) {
+        this.departmentName = departmentName;
+    }
+
+    @Override
+    public String toString() {
+        return "Account{" + "u_name=" + u_name + ", email=" + email + ", password=" + password + ", role=" + role + '}';
     }
 
 }

@@ -1,66 +1,57 @@
-<%-- 
-    Document   : Admin
-    Created on : Jun 12, 2025, 8:19:28 AM
-    Author     : HA DUC
---%>
-
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@page import="model.LeaveRequest" %>
-<%@page import="dal.DAO" %>
-<%@page import="java.util.List" %>
-<!DOCTYPE html>
-<html>
-   <%
-   
-    if (session == null || session.getAttribute("role") == null || !"admin".equalsIgnoreCase((String) session.getAttribute("role"))) {
-        response.sendRedirect("Login.jsp");
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="model.Account" %>
+<%
+    Account currentAccount = (Account) session.getAttribute("account");
+    String role = (String) session.getAttribute("role");
+    if (currentAccount == null || role == null || !"admin".equals(role)) {
+        response.sendRedirect("login.jsp");
         return;
     }
-
-    out.println("DEBUG role = " + session.getAttribute("role"));
-    out.println("DEBUG user_id = " + session.getAttribute("user_id"));
-
-    DAO d = new DAO();
-    List<LeaveRequest> list = d.getAllLeaveRequest();
 %>
-
-    <!-- Admin page content -->
-    <head><title> Leave Requests</title></head>
-    <table border="1">
-        <tr>
-            <th>Users</th>
-            <th>Type</th>
-            <th>Start date</th>
-            <th>End date</th>
-            <th>Reason</th>
-            <th>Status</th>
-            <th>Action</th>
-        </tr>
-        <%
-            for(LeaveRequest r : list){
-            if("pending".equals(r.getStatus())){
-        %>
-        <tr>
-            <td><%= r.getUserId() %></td>
-            <td><%= r.getLeaveTypeId() %></td>
-            <td><%= r.getStartDate() %></td>
-            <td><%= r.getEndDate() %></td>
-            <td><%= r.getReason() %></td>
-            <td><%= r.getStatus() %></td>
-            <td>
-                <form action="leaveapproval" method="post">
-                    <input type="hidden" name="requestId" value="<%= r.getId() %>"/>
-                    <button name="action" value="approve">Approve</button>
-                    <button name="action" value="reject">Reject</button>
-                </form>
-            </td>
-        </tr>
-        <%
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Admin Dashboard</title>
+        <link rel="stylesheet" href="styles.css">
+        <style>
+            body {
+                margin: 0;
+                font-family: Arial, sans-serif;
+                display: flex;
+                height: 100vh;
             }
-        }
-        %>
-    </table>
-
-
-
+            .sidebar {
+                width: 250px;
+                background-color: #2c3e50;
+                color: white;
+                padding-top: 20px;
+            }
+            .sidebar h2 {
+                text-align: center;
+                margin-bottom: 30px;
+            }
+            .sidebar a {
+                display: block;
+                padding: 15px 20px;
+                color: white;
+                text-decoration: none;
+            }
+            .sidebar a:hover {
+                background-color: #34495e;
+            }
+            .main-content {
+                flex: 1;
+                padding: 30px;
+                background-color: #ecf0f1;
+            }
+        </style>
+    </head>
+    <body>
+        <jsp:include page="SideBar.jsp"></jsp:include>
+        <div class="main-content">
+            <h1>Welcome, <%= currentAccount.getU_name() %></h1>
+            <p>Select an option from the sidebar to manage the system.</p>
+        </div>
+    </body>
 </html>
