@@ -181,12 +181,39 @@ public class DAO extends DBContext {
     }
 
     //get request by d_id
-    public List<LeaveRequest> getLeaveRequestByDepartmentId(int departmentId) {
+    public List<LeaveRequest> getLeaveRequestsByDepartmentId(int departmentId) {
         List<LeaveRequest> list = new ArrayList<>();
-        String sql = "SELECT lr.*\n"
-                + "FROM leave_requests lr\n"
-                + "JOIN users u ON lr.user_id = u.id\n"
-                + "WHERE u.department_id = ?;";
+        String sql = "SELECT * FROM leave_requests WHERE user_id IN (SELECT id FROM users WHERE department_id = ?)";
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, departmentId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                LeaveRequest lr = new LeaveRequest();
+                lr.setId(rs.getInt("id"));
+                lr.setUserId(rs.getInt("user_id"));
+                lr.setLeaveTypeId(rs.getInt("leave_type_id"));
+                lr.setStartDate(rs.getDate("start_date"));
+                lr.setEndDate(rs.getDate("end_date"));
+                lr.setReason(rs.getString("reason"));
+                lr.setStatus(rs.getString("status"));
+                lr.setRequestedAt(rs.getTimestamp("requested_at"));
+                list.add(lr);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public List<LeaveRequest> getPendingLeaveRequestsByDepartmentId(int departmentId) {
+        List<LeaveRequest> list = new ArrayList<>();
+        String sql = "SELECT lr.* FROM leave_requests lr "
+                + "JOIN users u ON lr.user_id = u.id "
+                + "WHERE u.department_id = ? AND lr.status = 'pending'";
         try {
             conn = DBContext.getConnection();
             ps = conn.prepareStatement(sql);
@@ -201,29 +228,7 @@ public class DAO extends DBContext {
                 lr.setEndDate(rs.getDate("end_date"));
                 lr.setReason(rs.getString("reason"));
                 lr.setStatus(rs.getString("status"));
-                lr.setApprovedBy(rs.getInt("approved_by"));
-                list.add(lr);
-
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-        return list;
-    }
-
-    public List<LeaveRequest> getPendingLeaveRequestsByDepartmentId(int departmentId) {
-        List<LeaveRequest> list = new ArrayList<>();
-        String sql = "SELECT * FROM leave_requests lr "
-                + "JOIN users u ON lr.user_id = u.id "
-                + "WHERE u.department_id = ? AND lr.status = 'pending'";
-        try {
-            conn = DBContext.getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setInt(1, departmentId);
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                LeaveRequest lr = new LeaveRequest();
-                // set properties from rs...
+                lr.setRequestedAt(rs.getTimestamp("requested_at")); // optional
                 list.add(lr);
             }
         } catch (SQLException e) {
@@ -308,9 +313,20 @@ public class DAO extends DBContext {
             ps = conn.prepareStatement(sql);
             ps.setInt(1, adminId);
             ps.setInt(2, requestId);
-            ps.executeUpdate(sql);
+            ps.executeUpdate(); // ✔️ Fixed: no argument passed
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                if (ps != null) {
+                    ps.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
         }
     }
 
@@ -350,7 +366,7 @@ public class DAO extends DBContext {
     }
 
     public void addAccount(Account acc) {
-        String sql = "INSERT INTO account (name, email, password, role, department_id) VALUES (?, ?, ?, ?, ?) ";
+        String sql = "INSERT INTO users (name, email, password, role, department_id, status) VALUES (?, ?, ?, ?, ?, ?)";
         try {
             conn = DBContext.getConnection();
             ps = conn.prepareStatement(sql);
@@ -465,4 +481,41 @@ public class DAO extends DBContext {
         acc.setStatus(rs.getString("status"));
         return acc;
     }
+
+    public String getUsernameById(int userId) {
+        String name = null;
+        String sql = "Select [name] from users where id=?";
+        try {
+            conn = DBContext.getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, userId);
+
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                name = rs.getString("name");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return name;
+    }
+
+    public String getLeaveTypeNamebyId(int typeId) {
+        String name = null;
+        String sql = "SELECT name FROM leave_types WHERE id = ?";
+        try {
+            conn = DBContext.getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, typeId);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                name = rs.getString("name");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return name;
+    }
+
 }

@@ -18,7 +18,7 @@
 
     int departmentId = manager.getDepartmentId();
     DAO dao = new DAO();
-    List<LeaveRequest> list = dao.getLeaveRequestByDepartmentId(departmentId);
+    List<LeaveRequest> list = dao.getPendingLeaveRequestsByDepartmentId(departmentId);
 
     boolean hasPending = false;
     for (LeaveRequest r : list) {

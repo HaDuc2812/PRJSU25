@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.sql.Date;
+import model.Account;
 import model.Users;
 
 /**
@@ -70,19 +71,24 @@ public class LeaveApplication extends HttpServlet {
      * @throws ServletException if a servlet-specific error occurs
      * @throws IOException if an I/O error occurs
      */
+    
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
 
-        // Get the user from session
+        // Get the account from session
         HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
+        if (session == null || session.getAttribute("account") == null) {
+            System.out.println("DEBUG: Session is null or account missing.");
             response.sendRedirect("Login.jsp");
             return;
         }
 
-        Users user = (Users) session.getAttribute("user");
+        Account account = (Account) session.getAttribute("account");
+
+        // DEBUG log
+        System.out.println("DEBUG: Logged in as: " + account.getU_name() + " (ID: " + account.getUsers_id() + ")");
 
         // Get form inputs
         String leaveTypeIdStr = request.getParameter("leaveTypeId");
@@ -97,16 +103,17 @@ public class LeaveApplication extends HttpServlet {
 
             // Insert the leave request
             DAO dao = new DAO();
-            dao.insertLeaveRequest(user.getUsers_id(), leaveTypeId, startDate, endDate, reason);
+            dao.insertLeaveRequest(account.getUsers_id(), leaveTypeId, startDate, endDate, reason);
 
             request.setAttribute("message", "Đơn nghỉ phép đã được gửi.");
             request.getRequestDispatcher("Employees.jsp").forward(request, response);
+            return;
+
         } catch (Exception e) {
             e.printStackTrace();
             request.setAttribute("message", "Có lỗi xảy ra: " + e.getMessage());
+            request.getRequestDispatcher("Employees.jsp").forward(request, response);
         }
-
-        request.getRequestDispatcher("Employees.jsp").forward(request, response);
     }
 
     /**

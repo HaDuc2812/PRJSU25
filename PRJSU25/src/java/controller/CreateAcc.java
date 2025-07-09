@@ -11,14 +11,13 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import model.Account;
 
 /**
  *
  * @author HA DUC
  */
-public class LeaveApprovalServlet extends HttpServlet {
+public class CreateAcc extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -37,10 +36,10 @@ public class LeaveApprovalServlet extends HttpServlet {
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
-            out.println("<title>Servlet LeaveApprovalServlet</title>");
+            out.println("<title>Servlet CreateAcc</title>");
             out.println("</head>");
             out.println("<body>");
-            out.println("<h1>Servlet LeaveApprovalServlet at " + request.getContextPath() + "</h1>");
+            out.println("<h1>Servlet CreateAcc at " + request.getContextPath() + "</h1>");
             out.println("</body>");
             out.println("</html>");
         }
@@ -69,55 +68,46 @@ public class LeaveApprovalServlet extends HttpServlet {
      * @throws ServletException if a servlet-specific error occurs
      * @throws IOException if an I/O error occurs
      */
-    ;
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        try {
+            String name = request.getParameter("name");
+            String email = request.getParameter("email");
+            String password = request.getParameter("password");
+            String role = request.getParameter("role");
+            String status = request.getParameter("status");
+            String deptStr = request.getParameter("departmentId");
 
-        // Step 1: Parse the request ID and action
-        int requestId = Integer.parseInt(request.getParameter("requestId"));
-        String action = request.getParameter("action");
-
-        // Step 2: Get session and Account object
-        HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("account") == null) {
-            response.sendRedirect("Login.jsp");
-            return;
-        }
-
-        Account manager = (Account) session.getAttribute("account");
-        int adminId = manager.getUsers_id(); // Assuming this is the approving manager's ID
-
-        // Step 3: Approve or reject leave
-        DAO dao = new DAO();
-        if ("approve".equalsIgnoreCase(action)) {
-            boolean success = dao.approveLeaveRequest(requestId, adminId);
-            if (success) {
-                System.out.println("DEBUG: Leave approved by adminId=" + adminId);
-            } else {
-                System.out.println("DEBUG: Failed to approve requestId=" + requestId);
+            int deptId = 0;
+            if (deptStr != null && !deptStr.isBlank()) {
+                deptId = Integer.parseInt(deptStr);
             }
-        } else if ("reject".equalsIgnoreCase(action)) {
-            dao.rejectLeaveRequest(requestId, adminId);
-            System.out.println("DEBUG: Leave rejected by adminId=" + adminId);
+            Account acc = new Account();
+            acc.setU_name(name);
+            acc.setEmail(email);
+            acc.setPassword(password);
+            acc.setRole(role);
+            acc.setStatus(status);
+            acc.setDepartmentId(deptId);
+
+            DAO d = new DAO();
+            d.addAccount(acc);
+
+            response.sendRedirect(request.getContextPath() + "/manageAccount");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        // Step 4: Redirect back to the approval page or dashboard
-        response.sendRedirect("ApproveRequest.jsp");
-
-        // Debug logs
-        System.out.println("DEBUG: action = " + action);
-        System.out.println("DEBUG: requestId = " + requestId);
-        System.out.println("DEBUG: adminId = " + adminId);
     }
 
-    @Override
-    public String getServletInfo() {
-        return "Handles approval and rejection of leave requests";
-    }
     /**
      * Returns a short description of the servlet.
      *
      * @return a String containing servlet description
      */
+    @Override
+    public String getServletInfo() {
+        return "Short description";
+    }// </editor-fold>
+
 }

@@ -89,11 +89,17 @@
             document.getElementById('editModal').style.display = 'none';
             document.getElementById('modalOverlay').style.display = 'none';
         }
+        function openCreateModal() {
+            document.getElementById('createForm').reset();
+            document.getElementById('createModal').style.display = 'block';
+            document.getElementById('modalOverlay').style.display = 'block';
+        }
     </script>
     <body>
         <jsp:include page="SideBar.jsp"></jsp:include>
             <div class="main-content">
                 <h1>Manage Accounts</h1>
+                <button onclick="openCreateModal()" class="button" style="margin-bottom: 20px;">Create Account</button><br/>
                 <table>
                     <thead>
                         <tr>
@@ -154,5 +160,25 @@
             </form>
         </div>
         <div id="modalOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#00000066; z-index:999;" onclick="closeModal()"></div>
+        <!-- Create Account Modal -->
+        <div id="createModal" style="display:none; position:fixed; top:25%; left:30%; width:40%; background:#fff; border:1px solid #ccc; padding:20px; z-index:1000;">
+            <h3>Create Account</h3>
+            <form id="createForm" method="post" action="${pageContext.request.contextPath}/createAcc">
+                <label>Name:</label><br>
+                <input type="text" name="name" required><br>
+                <label>Email:</label><br>
+                <input type="email" name="email" required><br>
+                <label>Password:</label><br>
+                <input type="password" name="password" required><br>
+                <label>Role:</label><br>
+                <input type="text" name="role" required><br>
+                <label>Status:</label><br>
+                <input type="text" name="status" required><br>
+                <label>Department ID:</label><br>
+                <input type="text" name="departmentId" required><br><br>
+                <button type="submit">Create</button>
+                <button type="button" onclick="closeModal()">Cancel</button>
+            </form>
+        </div>
     </body>
 </html>

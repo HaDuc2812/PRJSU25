@@ -6,6 +6,7 @@ package dal;
 
 import java.util.List;
 import model.Account;
+import model.LeaveRequest;
 
 /**
  *
@@ -15,26 +16,26 @@ public class TestDAO {
 
     public static void main(String[] args) {
         DAO dao = new DAO();
-        List<Account> accounts = dao.getAllAccount();
-
-        if (accounts == null) {
-            System.out.println("getAllAccounts() returned null.");
-            return;
-        }
-
-        System.out.println("Total accounts found: " + accounts.size());
-
-        for (Account acc : accounts) {
-            System.out.println("ID: " + acc.getUsers_id());
-            System.out.println("Name: " + acc.getU_name());
-            System.out.println("Email: " + acc.getEmail());
-            System.out.println("Role: " + acc.getRole());
-            System.out.println("Status: " + acc.getStatus());
-            System.out.println("Department" + acc.getDepartmentName());
-            System.out.println("-------------------------");
-        }
-    }
-}
+//        List<Account> accounts = dao.getAllAccount();
+//
+//        if (accounts == null) {
+//            System.out.println("getAllAccounts() returned null.");
+//            return;
+//        }
+//
+//        System.out.println("Total accounts found: " + accounts.size());
+//
+//        for (Account acc : accounts) {
+//            System.out.println("ID: " + acc.getUsers_id());
+//            System.out.println("Name: " + acc.getU_name());
+//            System.out.println("Email: " + acc.getEmail());
+//            System.out.println("Role: " + acc.getRole());
+//            System.out.println("Status: " + acc.getStatus());
+//            System.out.println("Department" + acc.getDepartmentName());
+//            System.out.println("-------------------------");
+//        }
+//    }
+//}
 //        int testId = 1; // replace with a valid user ID in your DB
 //
 //        Account acc = dao.getAccountById(testId);
@@ -50,7 +51,7 @@ public class TestDAO {
 //        } else {
 //            System.out.println("No account found with ID: " + testId);
 //        }
-    
+
 //        int testId = 3; // 👈 Change this to the ID you want to test
 //
 //        String deptName = dao.getDepartmentNameById(testId);
@@ -62,3 +63,20 @@ public class TestDAO {
 //        }
 //    }
 //}
+//        DAO dao = new DAO();
+//
+//        // Test getUserNameById
+//        int userId = 1; // Replace with an actual user ID from your database
+//        String userName = dao.getUsernameById(userId);
+//        System.out.println("User Name for ID " + userId + ": " + (userName != null ? userName : "Not found"));
+//
+//        // Test getLeaveTypeNameById
+//        int leaveTypeId = 3; // Replace with an actual leave type ID from your database
+//        String leaveTypeName = dao.getLeaveTypeNamebyId(leaveTypeId);
+//        System.out.println("Leave Type for ID " + leaveTypeId + ": " + (leaveTypeName != null ? leaveTypeName : "Not found"));
+        List<LeaveRequest> list = dao.getPendingLeaveRequestsByDepartmentId(3);
+        for (LeaveRequest r : list) {
+            System.out.println(r.getUserId() + " " + r.getReason() + " " + r.getStatus());
+        }
+    }
+}

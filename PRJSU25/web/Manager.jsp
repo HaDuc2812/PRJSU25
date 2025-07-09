@@ -62,6 +62,7 @@
         <h2>Manager</h2>
         <a href="ApproveRequest.jsp">✅ Approve Requests</a>
         <a href="ViewRequest.jsp">📄 View All Requests</a>
+        <a href="${pageContext.request.contextPath}/logout">Logout</a>
     </div>
 
     <div class="content">

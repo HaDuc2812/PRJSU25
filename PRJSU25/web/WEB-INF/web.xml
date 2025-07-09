@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app version="6.0" xmlns="https://jakarta.ee/xml/ns/jakartaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd">
+    <servlet>
+        <servlet-name>CreateAcc</servlet-name>
+        <servlet-class>controller.CreateAcc</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>ManageAccount</servlet-name>
         <url-pattern>/manageAccount</url-pattern>
@@ -15,6 +19,10 @@
     <servlet-mapping>
         <servlet-name>UpdateAccount</servlet-name>
         <url-pattern>/updateAcc</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>CreateAcc</servlet-name>
+        <url-pattern>/createAcc</url-pattern>
     </servlet-mapping>
     <welcome-file-list>
         <welcome-file>Login.jsp</welcome-file>

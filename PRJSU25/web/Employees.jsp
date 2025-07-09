@@ -1,9 +1,26 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page session="true" %>
 <%@ page import="model.LeaveRequest" %>
+<%@ page import="model.Account" %>
 <%@ page import="java.util.List" %>
 <%@ page import="dal.DAO" %>
-<%@ page import="model.Users" %>
+<%
+   
+    
+    if (session == null || session.getAttribute("account") == null || !"employee".equals(session.getAttribute("role"))) {
+    response.sendRedirect("Login.jsp");
+    return;
+    }
+    Account account = (Account) session.getAttribute("account");
+    String role = (String) session.getAttribute("role");
+    
+    if (account == null || role == null || !"employee".equals(role)) {
+        response.sendRedirect("Login.jsp");
+        return;
+    }
+    
+    
+%>
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -70,25 +87,13 @@
         </style>
         <script>
             function showSection(id) {
-                // Hide all sections
                 document.getElementById("formSection").classList.add("hidden");
                 document.getElementById("viewSection").classList.add("hidden");
-
-                // Show the selected section
                 document.getElementById(id).classList.remove("hidden");
             }
         </script>
     </head>
     <body>
-        <%
-            String role = (String) session.getAttribute("role");
-            if (role == null || !"employee".equals(role)) {
-                response.sendRedirect("Homepage.jsp");  // or Login.jsp
-                return;
-            }
-        %>
-        <!-- Admin page content -->
-        <h2>Welcome, Admin!</h2>
 
         <div class="sidebar">
             <button onclick="showSection('formSection')">Tạo đơn nghỉ phép</button>
@@ -99,16 +104,9 @@
             <!-- Form Section -->
             <div id="formSection" class="box">
                 <h2>Đơn xin nghỉ phép</h2>
+                <p>Xin chào, <strong><%= account.getU_name() %></strong></p>
 
-                <% Users user = (Users) session.getAttribute("user");
-           if (user != null) { %>
-                <p>Xin chào, <strong><%= user.getU_name() %></strong></p>
-                <% } else { %>
-                <p>Bạn chưa đăng nhập.</p>
-                <a href="Login.jsp">Đăng nhập</a>
-                <% } %>
-
-                <form action="leave" method="post">
+                <form action="${pageContext.request.contextPath}/leave" method="post">   
                     <label for="leaveType">Loại nghỉ phép:</label>
                     <select name="leaveTypeId" id="leaveType" required>
                         <option value="1">Nghỉ phép năm</option>
@@ -135,10 +133,9 @@
             <div id="viewSection" class="box hidden">
                 <h3>Danh sách đơn nghỉ phép</h3>
                 <%
-                    if (user != null) {
-                        DAO dao = new DAO();
-                        List<LeaveRequest> list = dao.getLeaveRequestByUserId(user.getUsers_id());
-                        if (list != null && !list.isEmpty()) {
+                    DAO dao = new DAO();
+                    List<LeaveRequest> list = dao.getLeaveRequestByUserId(account.getUsers_id());
+                    if (list != null && !list.isEmpty()) {
                 %>
                 <table>
                     <tr>
@@ -162,10 +159,10 @@
                 </table>
                 <% } else { %>
                 <p>Không có đơn nghỉ phép nào.</p>
-                <% } } else { %>
-                <p>Vui lòng đăng nhập để xem đơn nghỉ phép.</p>
                 <% } %>
             </div>
+             <a href="${pageContext.request.contextPath}/logout">Logout</a>
         </div>
+
     </body>
 </html>
